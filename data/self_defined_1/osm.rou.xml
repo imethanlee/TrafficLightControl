@@ -1,0 +1,7 @@
+<routes>
+	<vType accel="3.5" decel="2.2" id="car1" length="5" maxspeed="70" sigma="1.0" type="passenger" />
+	<flow beg="0" end="600" from="gneE29" id="flow1" number="120" to="gneE16" type="car1" />
+	<flow beg="0" end="600" from="gneE15" id="flow2" number="80" to="gneE27" type="car1" />
+	<flow beg="0" end="600" from="gneE22" id="flow3" number="40" to="gneE8" type="car1" />
+	<flow beg="0" end="600" from="gneE6" id="flow4" number="15" to="gneE24" type="car1" />
+</routes>
