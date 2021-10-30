@@ -131,6 +131,9 @@ class SumoAgent:
         """
         return self._cumulative_reward
 
+    def get_num_junctions(self):
+        return self.sumo_controller.num_junctions
+
     def all_travels_completed(self):
         return True if self.sumo_controller.get_vehicle_number_in_the_network() == 0 else False
 

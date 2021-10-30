@@ -37,7 +37,7 @@ def dqn_simulate():
         """#####################################################"""
         """ (a boolean torch.Tensor/list with length num_junctions) """
 
-        # action = torch.Tensor([0 for _ in range(sumo_agent.sumo_controller.num_junctions)])
+        # action = torch.Tensor([0 for _ in range(sumo_agent.get_num_junctions())])
         action = None
         sumo_agent.step(action)
 
