@@ -23,7 +23,7 @@ class SumoController:
 
         self.vehicle_enter_time = {}  # {vehicle_id -> its entering time}
 
-        self._generate_synthetic()
+        # self._generate_synthetic()
         self._value_check()
 
     def _init_approaching_lanes_in_junction(self):
@@ -69,6 +69,9 @@ class SumoController:
         # Actually, no need to use mod(%) ...
         return traci.trafficlight.getPhase(junction_id) % self.num_phases_in_junction[junction_id]
 
+    def get_tls_next_phase_at_junction(self, junction_id):
+        return (traci.trafficlight.getPhase(junction_id) + 1) % self.num_phases_in_junction[junction_id]
+
     def get_queue_length_at_junction(self, junction_id):
         lanes_id = self.approaching_lanes_id_in_junction[junction_id]
         total_queue_length = 0
@@ -88,7 +91,7 @@ class SumoController:
         total_updated_waiting_time = 0
         for lane_id in lanes_id:
             total_updated_waiting_time += traci.lane.getWaitingTime(lane_id)
-        return total_updated_waiting_time
+        return total_updated_waiting_time / 60.0
 
     def get_delay_at_junction(self, junction_id):
         lanes_id = self.approaching_lanes_id_in_junction[junction_id]
@@ -123,7 +126,7 @@ class SumoController:
 
             """ VERY IMPORTANT: Reset """
             self.last_step_vehicles_at_lane[lane_id] = current_step_vehicles_id_at_lane
-        return total_passed_vehicle_number, total_passed_vehicle_travel_time
+        return total_passed_vehicle_number, total_passed_vehicle_travel_time / 60.0
 
     def get_current_time(self):
         return traci.simulation.getTime()

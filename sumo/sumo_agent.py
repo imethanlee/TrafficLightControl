@@ -1,3 +1,5 @@
+import torch
+
 from sumo.sumo_controller import *
 
 
@@ -8,14 +10,14 @@ class SumoAgent:
         self.gamma = gamma
         self.delta_t = delta_t
 
-        self._current_state = None
+        self._current_state = torch.zeros([self.sumo_controller.num_junctions, 5])
         self._cumulative_reward = torch.Tensor([0])
         self._current_reward = None
         self.current_action = None
 
     def take_action(self, action: list) -> None:
         """
-        :param change_phase_or_not: A boolean list (length = num_junctions) indicating whether each junction change
+        :param action: A boolean list (length = num_junctions) indicating whether each junction change
                                     its phase or not.
                                     (False/0 represents stay put, True/1 represents change to next phase)
         :return: None
@@ -30,7 +32,8 @@ class SumoAgent:
                 self.sumo_controller.set_tls_to_next_phase_at_junction(junction_id)
 
     def _calc_current_state(self):
-        list_queue_length, list_updated_waiting_time, list_phase, list_vehicle_number = [], [], [], []
+        list_queue_length, list_updated_waiting_time, list_current_phase, list_next_phase, list_vehicle_number \
+            = [], [], [], [], []
         for junction_id in self.sumo_controller.junctions_id:
             list_queue_length.append(
                 self.sumo_controller.get_queue_length_at_junction(junction_id)
@@ -38,31 +41,44 @@ class SumoAgent:
             list_updated_waiting_time.append(
                 self.sumo_controller.get_updated_waiting_time_at_junction(junction_id)
             )
-            list_phase.append(
-                self.sumo_controller.get_tls_current_phase_at_junction(junction_id)
-            )
             list_vehicle_number.append(
                 self.sumo_controller.get_vehicle_number_at_junction(junction_id)
+            )
+            list_current_phase.append(
+                self.sumo_controller.get_tls_current_phase_at_junction(junction_id)
+            )
+            list_next_phase.append(
+                self.sumo_controller.get_tls_next_phase_at_junction(junction_id)
             )
 
         tensor_queue_length = torch.Tensor(list_queue_length)
         tensor_updated_waiting_time = torch.Tensor(list_updated_waiting_time)
-        tensor_phase = torch.Tensor(list_phase)
         tensor_vehicle_number = torch.Tensor(list_vehicle_number)
+        tensor_current_phase = torch.Tensor(list_current_phase)
+        tensor_next_phase = torch.Tensor(list_next_phase)
 
         tensor_state = torch.stack([tensor_queue_length,
                                     tensor_updated_waiting_time,
-                                    tensor_phase,
-                                    tensor_vehicle_number
+                                    tensor_vehicle_number,
+                                    tensor_current_phase,
+                                    tensor_next_phase,
                                     ]).T
         self._current_state = tensor_state
 
-    def get_current_state(self) -> torch.Tensor:
+    def get_current_state_with_update(self) -> torch.Tensor:
         """
+        IMPORTANT: This method calculates the state after taking action
         :return: A 2D torch.Tensor in the form of [num_junctions *
-                (queue_length, updated_waiting_time, phase, vehicle_number)]
+                (queue_length, updated_waiting_time, vehicle_number, current_phase, next_phase)]
         """
         self._calc_current_state()
+        return self._current_state
+
+    def get_current_state_without_update(self):
+        """
+        IMPORTANT: This method do not include any calculation
+        :return:
+        """
         return self._current_state
 
     def _calc_current_reward(self):

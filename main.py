@@ -27,14 +27,13 @@ def dqn_simulate():
     step = 0
     while True:
         """#####################################################"""
-        """########   1. Get the current state       ###########"""
+        """####   1. Get the current state                  ####"""
         """#####################################################"""
-        """1. Get the current state"""
 
-        current_state = sumo_agent.get_current_state()
+        current_state = sumo_agent.get_current_state_without_update()
 
         """#####################################################"""
-        """########   2. Take your action            ###########"""
+        """####   2. Take your action                       ####"""
         """#####################################################"""
         """ (a boolean torch.Tensor/list with length num_junctions) """
 
@@ -43,9 +42,10 @@ def dqn_simulate():
         sumo_agent.step(action)
 
         """#####################################################"""
-        """########   3. Get step/cumulative reward  ###########"""
+        """####  3. Get step/cumulative reward/next state   ####"""
         """#####################################################"""
 
+        next_state = sumo_agent.get_current_state_with_update()
         # current_reward = sumo_agent.get_current_reward()
         # cumulative_reward = sumo_agent.get_cumulative_reward()
 

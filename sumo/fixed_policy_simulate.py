@@ -11,10 +11,13 @@ def fixed_policy_simulate(args):
     action = torch.Tensor([1 for _ in range(sumo_agent.sumo_controller.num_junctions)])
     while True:
         # TODO: Define some fixed policy
+        current_state = sumo_agent.get_current_state_without_update()
+
         sumo_agent.step(action)
+
+        next_state = sumo_agent.get_current_state_with_update()
         # current_reward = sumo_agent.get_current_reward()
         # cumulative_reward = sumo_agent.get_cumulative_reward()
-
         if sumo_agent.all_travels_completed():
             break
         step += sumo_agent.delta_t
