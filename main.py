@@ -2,6 +2,47 @@ from sumo.sumo_agent import *
 from sumo.fixed_policy_simulate import *
 import argparse
 from net_agent import NetAgent
+import logging
+import os
+import sys
+from os.path import join
+
+
+def make_logger(name, save_dir, save_filename):
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.INFO)
+
+    ch = logging.StreamHandler(stream=sys.stdout)
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(message)s")
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
+    if save_dir:
+        fh = logging.FileHandler(os.path.join(save_dir, save_filename + ".txt"), mode='w')
+        fh.setLevel(logging.INFO)
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
+    return logger
+
+
+def get_time_stamp_str():
+    """Return time stamp in string format"""
+    import time
+    import datetime
+    ts = time.time()
+    st = datetime.datetime.fromtimestamp(ts).strftime('%Y_%m_%d_%H_%M_%S')
+    return st
+
+
+def create_dir_with_st(path):
+    """Create folder with name of timestamp, return folder path"""
+    from os.path import join as opj
+    from os import makedirs
+    path = opj(path, get_time_stamp_str())
+    makedirs(path, exist_ok=True)
+    return path
 
 
 # TODO: 参考下面这个method来 1.获取state 2.执行action 3.获取reward
@@ -68,6 +109,7 @@ if __name__ == "__main__":
     # 3. "./data/nus2/osm": NUS network 2
     parser.add_argument('--require_gui', type=bool, default=True)
     parser.add_argument('--test_case_name', type=str, default="./data/self_defined_1/osm")
+    parser.add_argument('--log_path', type=str, default="./log")
     parser.add_argument('--num_phases', type=int, default=2)
     parser.add_argument('--num_actions', type=int, default=16)
     parser.add_argument('--state_dim', type=int, default=20)
@@ -88,6 +130,13 @@ if __name__ == "__main__":
 
     # dqn_simulate()
     # fixed_policy_simulate(args)
+    logger_path = create_dir_with_st(args.log_path)
+    logger = make_logger('Logger file for action recognition', logger_path, 'log')
+
+    ckpt_path = join(logger_path, 'checkpoints')
+
+    os.makedirs(ckpt_path, exist_ok=True)
+
     torch.manual_seed(args.seed)
     dqn_simulate(args)
     # np.random.seed(opt.seed)

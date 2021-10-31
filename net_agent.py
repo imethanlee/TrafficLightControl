@@ -60,12 +60,16 @@ class NetAgent:
         self.lr = args.lr
 
     def load_model(self, file_name):
-        self.q_network.load_state_dict(
-            torch.load((os.path.join(self.args.PATH_TO_MODEL, "%s_q_network.h5" % file_name))))
-        self.q_network.eval()
+        checkpoint = torch.load((os.path.join(self.args.model_path, "{}_model.pth".format(file_name))))
+        self.q_network.load_state_dict(checkpoint['q_state_dict'])
+        self.optimizer_DQN.load_state_dict(checkpoint['optim'])
+        # self.q_network.eval()
 
-    def save_model(self, model, file_name):
-        torch.save(model.state_dict(), os.path.join(self.args.PATH_TO_MODEL, "%s_q_network.h5" % file_name))
+    def save_model(self, root_path):
+        saving_dict = {'q_state_dict': self.q_network.state_dict(),
+                       'optim': self.optimizer_DQN.state_dict(),
+                       'is_best': 1}
+        torch.save(saving_dict, root_path)
 
     def build_memory(self):
         memory_list = []
@@ -167,7 +171,7 @@ class NetAgent:
             for action_i in range(self.num_actions):
                 transitions += self.memory[phase_i][action_i].memory
         # add
-        self.define_criterion_and_opti()
+        self.define_criterion_and_opti(self.device)
         self.train_net(transitions)
         self.q_target_outdated += 1
         self.forget()
