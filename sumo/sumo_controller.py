@@ -100,6 +100,9 @@ class SumoController:
             total_delay += 1. - traci.lane.getLastStepMeanSpeed(lane_id) / traci.lane.getMaxSpeed(lane_id)
         return total_delay
 
+    def get_current_time(self):
+        return traci.simulation.getCurrentTime() / 1000
+
     def get_passed_vehicle_number_and_travel_time_at_junction(self, junction_id):
         """
         Can ONLY call once each time step

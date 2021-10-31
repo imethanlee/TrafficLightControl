@@ -57,12 +57,12 @@ class SumoAgent:
         tensor_current_phase = torch.Tensor(list_current_phase)
         tensor_next_phase = torch.Tensor(list_next_phase)
 
-        tensor_state = torch.stack([tensor_queue_length,
-                                    tensor_updated_waiting_time,
-                                    tensor_vehicle_number,
-                                    tensor_current_phase,
-                                    tensor_next_phase,
-                                    ]).T
+        tensor_state = torch.cat([tensor_queue_length,
+                                  tensor_updated_waiting_time,
+                                  tensor_vehicle_number,
+                                  tensor_current_phase,
+                                  tensor_next_phase,
+                                  ], dim=1)
         self._current_state = tensor_state
 
     def get_current_state_with_update(self) -> torch.Tensor:
@@ -106,7 +106,8 @@ class SumoAgent:
             # after the last action $a$
             # 6.? Total travel time of vehicles T that passed the intersection during time interval $\Delta t$
             # after the last action $a$
-            vehicle_number, travel_time = self.sumo_controller.get_passed_vehicle_number_and_travel_time_at_junction(junction_id)
+            vehicle_number, travel_time = self.sumo_controller.get_passed_vehicle_number_and_travel_time_at_junction(
+                junction_id)
             current_reward[4] += vehicle_number
             current_reward[5] += travel_time
 
@@ -130,6 +131,9 @@ class SumoAgent:
         :return: A torch.Tensor with only 1 element
         """
         return self._cumulative_reward
+
+    def get_current_time(self):
+        return self.sumo_controller.get_current_time()
 
     def get_num_junctions(self):
         return self.sumo_controller.num_junctions
