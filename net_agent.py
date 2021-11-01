@@ -54,7 +54,7 @@ class NetAgent:
         self.batch_size = args.batch_size
         # self.device = args.device
         self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-        self.EPSILON, self.GAMMA = 0.9, 0.9
+        self.EPSILON, self.GAMMA = 0.05, 0.9
         self.q_target_outdated = 0
         self.UPDATE_Q_TAR = 5
         self.q_network, self.q_target = DQN(args.state_dim, args.num_actions).to(self.device), DQN(args.state_dim, args.num_actions).to(self.device)
