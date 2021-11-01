@@ -90,7 +90,7 @@ class NetAgent:
             self.action = torch.argmax(q_values[0])
         if self.EPSILON > 0.001 and count >= 20000:
             self.EPSILON = self.EPSILON * 0.9999
-        return self.action, q_values
+        return self.action
 
     def remember(self, state, action, reward, next_state):
 
