@@ -39,7 +39,8 @@ class DQN(nn.Module):
         x_0 = activate(self.seperate0_layer(x))
         x_1 = activate(self.seperate1_layer(x))
         q0_value, q1_value = self.out_layer0(x_0), self.out_layer1(x_1)
-        q_value = (1 - cur_phase) * q0_value + cur_phase * q1_value
+        selector0, selector1 = torch.sum((1 - cur_phase)), torch.sum(cur_phase)
+        q_value = selector0 * q0_value + selector1 * q1_value
         return q_value.view(q_value.size(0), -1)
 
 
@@ -77,11 +78,10 @@ class NetAgent:
             memory_list.append([ReplayMemory(self.memory_size) for j in range(self.num_actions)])
         return memory_list
 
-    def choose(self, count, state):
+    def choose(self, count, state, cur_phase):
 
         ''' choose the best action for current state '''
-
-        q_values = self.q_network(state)
+        q_values = self.q_network(state, cur_phase)
         # print(q_values)
         if random.random() <= self.EPSILON:  # continue explore new Random Action
             self.action = random.randrange(len(q_values[0]))
