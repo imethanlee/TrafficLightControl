@@ -46,7 +46,7 @@ def create_dir_with_st(path):
 
 
 # TODO: 参考下面这个method来 1.获取state 2.执行action 3.获取reward
-def dqn_simulate(args):
+def dqn_simulate(args, ckpt_path):
     # Specify the traffic environment
     sumo_agent = SumoAgent(args.test_case_name,
                            require_gui=args.require_gui,
@@ -98,13 +98,41 @@ def dqn_simulate(args):
             """########                END              ###########"""
             """#####################################################"""
             if sumo_agent.all_travels_completed():
-                if sumo_agent.get_current_time() < all_time:
-                    all_time = sumo_agent.get_current_time()
                 break
             step += sumo_agent.delta_t
             current_time = sumo_agent.get_current_time()
         sumo_agent.sumo_end()
-        logger.info('[INFO] All_time {} in epoch[{}/{}]'.format(all_time, epoch, args.max_epoch))
+
+        logger.info('\n[INFO] End of Epoch Validation...')
+
+        sumo_agent.sumo_start()
+        step = 0
+        net_agent.reset_update_count()
+        with torch.no_grad():
+            sumo_agent.sumo_start()
+            step = 0
+            net_agent.reset_update_count()
+
+            current_time = sumo_agent.get_current_time()
+            while current_time < run_counts:
+
+                current_state = sumo_agent.get_current_state()
+                current_phase = sumo_agent.get_current_phase()
+
+                action = torch.tensor([net_agent.choose(current_time, current_state, current_phase)])
+
+                # get reward from sumo agent
+                sumo_agent.step(action)
+
+                step += sumo_agent.delta_t
+                current_time = sumo_agent.get_current_time()
+                if sumo_agent.all_travels_completed():
+                    if sumo_agent.get_current_time() < all_time:
+                        all_time = sumo_agent.get_current_time()
+                        net_agent.save_model(join(ckpt_path, 'best_time.pth'))
+                    break
+            sumo_agent.sumo_end()
+            logger.info('[INFO] All_time {} in epoch[{}/{}]'.format(all_time, epoch, args.max_epoch))
     # End interacting with the SUMO environment
 
 
@@ -145,5 +173,5 @@ if __name__ == "__main__":
     os.makedirs(ckpt_path, exist_ok=True)
 
     torch.manual_seed(args.seed)
-    dqn_simulate(args)
+    dqn_simulate(args, ckpt_path)
     # np.random.seed(opt.seed)
