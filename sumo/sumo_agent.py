@@ -12,6 +12,7 @@ class SumoAgent:
 
         self._current_state = torch.zeros([self.sumo_controller.num_junctions*5])
         self._current_phase = torch.zeros([self.sumo_controller.num_junctions])
+        self._next_phase = torch.zeros([self.sumo_controller.num_junctions])
         self._cumulative_reward = torch.Tensor([0])
         self._current_reward = None
         self.current_action = None
@@ -68,6 +69,7 @@ class SumoAgent:
                                   ], dim=0)
 
         self._current_phase = tensor_current_phase
+        self._next_phase = tensor_next_phase
         self._current_state = tensor_state
 
     def get_current_state(self):
@@ -80,6 +82,9 @@ class SumoAgent:
 
     def get_current_phase(self):
         return self._current_phase
+
+    def get_next_phase(self):
+        return self._next_phase
 
     def _calc_current_reward(self):
         if self.current_action is None:

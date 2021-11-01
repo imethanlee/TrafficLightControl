@@ -52,9 +52,9 @@ def dqn_simulate(args):
                            require_gui=args.require_gui,
                            gamma=args.gamma,
                            delta_t=args.delta_t)
-
     net_agent = NetAgent(args)
     run_counts = args.run_counts
+    all_time = run_counts
     for epoch in range(args.max_epoch):
 
         # Start interacting with the SUMO environment
@@ -71,7 +71,7 @@ def dqn_simulate(args):
             current_state = sumo_agent.get_current_state()
             current_phase = sumo_agent.get_current_phase()
 
-            action = net_agent.choose(current_time, current_state, current_phase)
+            action = torch.tensor([net_agent.choose(current_time, current_state, current_phase)])
 
             """#####################################################"""
             """####   2. Take your action                       ####"""
@@ -86,19 +86,25 @@ def dqn_simulate(args):
             """#####################################################"""
 
             next_state = sumo_agent.get_current_state()
-            current_reward = sumo_agent.get_current_reward()
+            next_phase = sumo_agent.get_next_phase()
+            current_reward = torch.FloatTensor([sumo_agent.get_current_reward()])
             # cumulative_reward = sumo_agent.get_cumulative_reward()
 
-            net_agent.remember(current_state, action, current_reward, next_state)
+            net_agent.remember(current_state, action, current_reward, next_state, current_phase, next_phase)
 
-            net_agent.trainer()
+            loss = net_agent.trainer()
+            logger.info('[INFO] Time {} Loss {} in epoch[{}/{}]'.format(current_time, loss, epoch, args.max_epoch))
             """#####################################################"""
             """########                END              ###########"""
             """#####################################################"""
             if sumo_agent.all_travels_completed():
+                if sumo_agent.get_current_time() < all_time:
+                    all_time = sumo_agent.get_current_time()
                 break
             step += sumo_agent.delta_t
+            current_time = sumo_agent.get_current_time()
         sumo_agent.sumo_end()
+        logger.info('[INFO] All_time {} in epoch[{}/{}]'.format(all_time, epoch, args.max_epoch))
     # End interacting with the SUMO environment
 
 
@@ -111,7 +117,7 @@ if __name__ == "__main__":
     parser.add_argument('--require_gui', type=bool, default=False)
     parser.add_argument('--test_case_name', type=str, default="./data/self_defined_1/osm")
     parser.add_argument('--log_path', type=str, default="./log")
-    parser.add_argument('--num_phases', type=int, default=2)
+    parser.add_argument('--num_phases', type=int, default=16)
     parser.add_argument('--num_actions', type=int, default=16)
     parser.add_argument('--state_dim', type=int, default=20)
     parser.add_argument('--memory_size', type=int, default=1000)

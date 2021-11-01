@@ -5,7 +5,7 @@ import random
 from collections import namedtuple, deque
 
 Transition = namedtuple('Transition',
-                        ('state', 'action', 'next_state', 'reward'))
+                        ('state', 'action', 'next_state', 'reward', 'cur_phase', 'next_phase', ))
 
 
 class ReplayMemory(object):
@@ -57,7 +57,7 @@ class NetAgent:
         self.EPSILON, self.GAMMA = 0.9, 0.9
         self.q_target_outdated = 0
         self.UPDATE_Q_TAR = 5
-        self.q_network, self.q_target = DQN(args.state_dim, args.num_actions), DQN(args.state_dim, args.num_actions)
+        self.q_network, self.q_target = DQN(args.state_dim, args.num_actions).to(self.device), DQN(args.state_dim, args.num_actions).to(self.device)
         self.lr = args.lr
 
     def load_model(self, file_name):
@@ -84,7 +84,7 @@ class NetAgent:
         q_values = self.q_network(state, cur_phase)
         # print(q_values)
         if random.random() <= self.EPSILON:  # continue explore new Random Action
-            self.action = random.randrange(len(q_values[0]))
+            self.action = torch.tensor(random.randrange(len(q_values[0])))
             print("##Explore")
         else:  # exploitation
             self.action = torch.argmax(q_values[0])
@@ -92,10 +92,11 @@ class NetAgent:
             self.EPSILON = self.EPSILON * 0.9999
         return self.action
 
-    def remember(self, state, action, reward, next_state):
+    def remember(self, state, action, reward, next_state, cur_phase, next_phase):
 
         """ log the history """
-        self.memory[state[3]][action].push([state, action, reward, next_state])
+        cur_phase_num = self.bin2dec(cur_phase, len(cur_phase)).long()
+        self.memory[cur_phase_num.item()][action].push(state, action, next_state, reward, cur_phase, next_phase)
 
     def forget(self):
 
@@ -104,11 +105,11 @@ class NetAgent:
         for phase_i in range(self.num_phases):
             for action_i in range(self.num_actions):
                 if len(self.memory[phase_i][action_i]) > self.memory_size:
-                    print("length of memory (state {0}, action {1}): {2}, before forget".format(
-                        phase_i, action_i, len(self.memory[phase_i][action_i])))
+                    # print("length of memory (state {0}, action {1}): {2}, before forget".format(
+                    #     phase_i, action_i, len(self.memory[phase_i][action_i])))
                     self.memory[phase_i][action_i] = self.memory[phase_i][action_i][-self.memory_size:]
-                print("length of memory (state {0}, action {1}): {2}, after forget".format(
-                    phase_i, action_i, len(self.memory[phase_i][action_i])))
+                # print("length of memory (state {0}, action {1}): {2}, after forget".format(
+                #     phase_i, action_i, len(self.memory[phase_i][action_i])))
 
     def define_criterion_and_opti(self, device, weight_decay=1e-5):
         self.optimizer_DQN = torch.optim.Adam(params=self.q_network.parameters(),
@@ -127,27 +128,33 @@ class NetAgent:
 
         # Compute a mask of non-final states and concatenate the batch elements
         # (a final state would've been the one after which simulation ended)
-        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
-                                                batch.next_state)), device=self.device, dtype=torch.bool)
-        non_final_next_states = torch.cat([s for s in batch.next_state
-                                           if s is not None])
+        # non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
+        #                                         batch.next_state)), device=self.device, dtype=torch.bool)
+        #
+        # non_final_next_states = torch.cat([s for s in batch.next_state
+        #                                    if s is not None])
 
-        state_batch = torch.cat(batch.state)
-        action_batch = torch.cat(batch.action)
-        reward_batch = torch.cat(batch.reward)
-
+        state_batch = torch.cat(batch.state).to(self.device).view(self.batch_size, -1)
+        action_batch = torch.cat(batch.action).to(self.device).view(self.batch_size, -1)
+        reward_batch = torch.cat(batch.reward).to(self.device).view(self.batch_size, -1)
+        cur_phase_batch = torch.cat(batch.cur_phase).to(self.device).view(self.batch_size, -1)
         # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
         # columns of actions taken. These are the actions which would've been taken
         # for each batch state according to policy_net
-        state_action_values = self.q_network(state_batch).gather(1, action_batch)
+        state_action_values = self.q_network(state_batch, cur_phase_batch).gather(1, action_batch)
         # Compute V(s_{t+1}) for all next states.
         # Expected values of actions for non_final_next_states are computed based
         # on the "older" target_net; selecting their best reward with max(1)[0].
         # This is merged based on the mask, such that we'll have either the expected
         # state value or 0 in case the state was final.
-        next_state_values = torch.zeros(self.batch_size, device=self.device)
-        next_state_values[non_final_mask] = self.q_target(non_final_next_states).max(1)[0].detach()
+        # next_state_values = torch.zeros(self.batch_size, device=self.device)
+        next_phase_batch = torch.cat(batch.next_phase).to(self.device).view(self.batch_size, -1)
+        next_state_batch = torch.cat(batch.next_state).to(self.device).view(self.batch_size, -1)
+        next_state_values = self.q_target(next_state_batch, next_phase_batch).max(1)[0].detach()
+
+        # next_state_values[non_final_mask] = self.q_target(non_final_next_states).max(1)[0].detach()
         # Compute the expected Q values
+
         expected_state_action_values = (next_state_values * self.GAMMA) + reward_batch
 
         # Compute Huber loss
@@ -160,6 +167,7 @@ class NetAgent:
         for param in self.q_network.parameters():
             param.grad.data.clamp_(-1, 1)
         self.optimizer_DQN.step()
+        return loss.item()
 
     def trainer(self):
         if self.batch_size > self.memory_size:
@@ -169,12 +177,15 @@ class NetAgent:
 
         for phase_i in range(self.num_phases):
             for action_i in range(self.num_actions):
-                transitions += self.memory[phase_i][action_i].memory
+                transitions.extend(self.memory[phase_i][action_i].memory)
         # add
-        self.define_criterion_and_opti(self.device)
-        self.train_net(transitions)
-        self.q_target_outdated += 1
-        self.forget()
+        if len(transitions) > self.batch_size:
+            transitions = random.sample(transitions, self.batch_size)
+            self.define_criterion_and_opti(self.device)
+            loss = self.train_net(transitions)
+            self.q_target_outdated += 1
+            self.forget()
+            return loss
 
     def update_network_bar(self):
 
@@ -191,3 +202,8 @@ class NetAgent:
         sample_weight = torch.Tensor(sample_weight)
         sample_weight_pr = torch.pow(sample_weight + pos_constant, alpha) / sample_weight.sum()
         return sample_weight_pr
+
+    @staticmethod
+    def bin2dec(b, bits):
+        mask = 2 ** torch.arange(0, bits, 1)
+        return torch.sum(mask * b, -1)
