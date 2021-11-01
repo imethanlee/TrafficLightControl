@@ -16,21 +16,23 @@ class SumoAgent:
         self._current_reward = None
         self.current_action = None
 
-    def take_action(self, action: list) -> None:
+    def take_action(self, action: int) -> None:
         """
-        :param action: A boolean list (length = num_junctions) indicating whether each junction change
-                                    its phase or not.
-                                    (False/0 represents stay put, True/1 represents change to next phase)
+        :param action: A number ranging from 0 to 2^{num_junctions} - 1
         :return: None
         """
         if action is None:
             raise TypeError("Action is None")
+        action = self._int_to_bin(action)
         if len(action) != self.sumo_controller.num_junctions:
             raise AttributeError("The length of input is not equal to num_junctions")
         self.current_action = action
         for i, junction_id in enumerate(self.sumo_controller.junctions_id):
             if self.current_action[i]:
                 self.sumo_controller.set_tls_to_next_phase_at_junction(junction_id)
+
+    def _int_to_bin(self, val):
+        return [val >> d & 1 for d in range(self.get_num_junctions())][::-1]
 
     def _calc_current_state(self):
         list_queue_length, list_updated_waiting_time, list_current_phase, list_next_phase, list_vehicle_number \
@@ -68,19 +70,11 @@ class SumoAgent:
         self._current_phase = tensor_current_phase
         self._current_state = tensor_state
 
-    def get_current_state_with_update(self) -> torch.Tensor:
-        """
-        IMPORTANT: This method calculates the state after taking action
-        :return: A 2D torch.Tensor in the form of [num_junctions *
-                (queue_length, updated_waiting_time, vehicle_number, current_phase, next_phase)]
-        """
-        self._calc_current_state()
-        return self._current_state
-
-    def get_current_state_without_update(self):
+    def get_current_state(self):
         """
         IMPORTANT: This method do not include any calculation
-        :return:
+        :return: A 2D torch.Tensor in the form of [num_junctions *
+                (queue_length, updated_waiting_time, vehicle_number, current_phase, next_phase)]
         """
         return self._current_state
 
@@ -129,6 +123,10 @@ class SumoAgent:
         return self.current_reward
 
     def _calc_cumulative_reward(self):
+        """
+        Warning: to be modified !!!
+        :return:
+        """
         self._cumulative_reward = self.gamma * self._cumulative_reward + self.current_reward
 
     def get_cumulative_reward(self) -> torch.Tensor:
@@ -158,11 +156,12 @@ class SumoAgent:
         # 1. Take action
         self.take_action(action)
 
-        # 2. Perform one-step simulation and update vehicle
+        # 2. Perform delta_t-step simulation and update vehicle
         for _ in range(self.delta_t):
             traci.simulationStep()
             self.sumo_controller.update_vehicle_enter_time()
 
-        # 3. Calculate reward
+        # 3. Calculate state/reward
+        self._calc_current_state()
         self._calc_current_reward()
         self._calc_cumulative_reward()

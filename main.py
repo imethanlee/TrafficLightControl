@@ -68,7 +68,7 @@ def dqn_simulate(args):
             """####   1. Get the current state                  ####"""
             """#####################################################"""
 
-            current_state = sumo_agent.get_current_state_without_update()
+            current_state = sumo_agent.get_current_state()
             current_phase = sumo_agent.get_current_phase()
 
             action = net_agent.choose(current_time, current_state, current_phase)
@@ -85,7 +85,7 @@ def dqn_simulate(args):
             """####  3. Get step/cumulative reward/next state   ####"""
             """#####################################################"""
 
-            next_state = sumo_agent.get_current_state_with_update()
+            next_state = sumo_agent.get_current_state()
             current_reward = sumo_agent.get_current_reward()
             # cumulative_reward = sumo_agent.get_cumulative_reward()
 
