@@ -56,6 +56,7 @@ def dqn_simulate(args, ckpt_path):
     run_counts = args.run_counts
     all_time = run_counts
     for epoch in range(args.max_epoch):
+        is_val = False
 
         # Start interacting with the SUMO environment
         sumo_agent.sumo_start()
@@ -71,7 +72,7 @@ def dqn_simulate(args, ckpt_path):
             current_state = sumo_agent.get_current_state()
             current_phase = sumo_agent.get_current_phase()
 
-            action = torch.tensor([net_agent.choose(current_time, current_state, current_phase)])
+            action = torch.tensor([net_agent.choose(current_time, current_state, current_phase, is_val)])
 
             """#####################################################"""
             """####   2. Take your action                       ####"""
@@ -109,6 +110,7 @@ def dqn_simulate(args, ckpt_path):
         step = 0
         net_agent.reset_update_count()
         with torch.no_grad():
+            is_val = True
 
             current_time = sumo_agent.get_current_time()
             while current_time < run_counts:
@@ -116,7 +118,7 @@ def dqn_simulate(args, ckpt_path):
                 current_state = sumo_agent.get_current_state()
                 current_phase = sumo_agent.get_current_phase()
 
-                action = torch.tensor([net_agent.choose(current_time, current_state, current_phase)])
+                action = torch.tensor([net_agent.choose(current_time, current_state, current_phase, is_val)])
 
                 # get reward from sumo agent
                 sumo_agent.step(action)
@@ -146,7 +148,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_actions', type=int, default=16)
     parser.add_argument('--state_dim', type=int, default=20)
     parser.add_argument('--memory_size', type=int, default=1000)
-    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--batch_size', type=int, default=32)
     # parser.add_argument('--device', type=int, default=0)
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--max_epoch', default=50, type=int)

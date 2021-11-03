@@ -78,12 +78,12 @@ class NetAgent:
             memory_list.append([ReplayMemory(self.memory_size) for j in range(self.num_actions)])
         return memory_list
 
-    def choose(self, count, state, cur_phase):
+    def choose(self, count, state, cur_phase, is_val):
 
         ''' choose the best action for current state '''
         q_values = self.q_network(state, cur_phase)
         # print(q_values)
-        if random.random() <= self.EPSILON:  # continue explore new Random Action
+        if random.random() <= self.EPSILON and not is_val:  # continue explore new Random Action
             self.action = torch.tensor(random.randrange(q_values.shape[0]))
             print("##Explore")
         else:  # exploitation
