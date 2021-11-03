@@ -116,7 +116,7 @@ class SumoAgent:
             current_reward[4] += vehicle_number
             current_reward[5] += travel_time
 
-        self.current_reward = torch.sum(weight * current_reward).requires_grad_(False)
+        self._current_reward = torch.sum(weight * current_reward)
         self.current_action = None
         return
 
@@ -125,14 +125,14 @@ class SumoAgent:
         Get the reward for the last action
         :return: A torch.Tensor with only 1 element
         """
-        return self.current_reward
+        return self._current_reward
 
     def _calc_cumulative_reward(self):
         """
         Warning: to be modified !!!
         :return:
         """
-        self._cumulative_reward = self.gamma * self._cumulative_reward + self.current_reward
+        self._cumulative_reward = self.gamma * self._cumulative_reward + self._current_reward
 
     def get_cumulative_reward(self) -> torch.Tensor:
         """
