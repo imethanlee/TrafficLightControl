@@ -23,6 +23,10 @@ class SumoController:
 
         self.vehicle_enter_time = {}  # {vehicle_id -> its entering time}
 
+        self._dict_phase_to_int = {}
+        self._phase_int = 0
+        self._generate_phase_to_int_dict(0, [])
+
         # self._generate_synthetic()
         self._value_check()
 
@@ -60,6 +64,21 @@ class SumoController:
             num_phases = len(junction.findall("phase"))
             self.num_phases_in_junction[junction_id] = num_phases
 
+    def _generate_phase_to_int_dict(self, index, phase_list):
+        junction_id = self.junctions_id[index]
+        for real_phase in range(self.num_phases_in_junction[junction_id] // 2):
+            phase_list_copy = phase_list.copy()
+            phase_list_copy.append(real_phase)
+            if index == self.num_junctions - 1:
+                phase_tensor = torch.Tensor(phase_list_copy)
+                self._dict_phase_to_int[phase_tensor] = self._phase_int
+                self._phase_int += 1
+            else:
+                self._generate_phase_to_int_dict(index + 1, phase_list_copy)
+
+    def get_dict_phase_to_int(self):
+        return self._dict_phase_to_int
+
     def set_tls_to_next_phase_at_junction(self, junction_id):
         current_phase = self.get_tls_current_phase_at_junction(junction_id)
         next_phase = (current_phase + 1) % self.num_phases_in_junction[junction_id]
@@ -70,7 +89,7 @@ class SumoController:
         return traci.trafficlight.getPhase(junction_id) % self.num_phases_in_junction[junction_id]
 
     def get_tls_next_phase_at_junction(self, junction_id):
-        return (traci.trafficlight.getPhase(junction_id) + 1) % self.num_phases_in_junction[junction_id]
+        return (traci.trafficlight.getPhase(junction_id) + 2) % self.num_phases_in_junction[junction_id]
 
     def get_queue_length_at_junction(self, junction_id):
         lanes_id = self.approaching_lanes_id_in_junction[junction_id]
@@ -99,9 +118,6 @@ class SumoController:
         for lane_id in lanes_id:
             total_delay += 1. - traci.lane.getLastStepMeanSpeed(lane_id) / traci.lane.getMaxSpeed(lane_id)
         return total_delay
-
-    def get_current_time(self):
-        return traci.simulation.getCurrentTime() / 1000
 
     def get_passed_vehicle_number_and_travel_time_at_junction(self, junction_id):
         """

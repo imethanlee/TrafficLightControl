@@ -8,14 +8,17 @@ def fixed_policy_simulate(args):
                            delta_t=args.delta_t)
     sumo_agent.sumo_start()
     step = 0
-    action = 2 ** sumo_agent.get_num_junctions() - 1
     while True:
         # TODO: Define some fixed policy
-        current_state = sumo_agent.get_current_state()
+        # current_state = sumo_agent.get_current_state()
 
+        if step % 10 == 0:
+            action = 2 ** sumo_agent.get_num_junctions() - 1
+        else:
+            action = 0
         sumo_agent.step(action)
 
-        next_state = sumo_agent.get_current_state()
+        # next_state = sumo_agent.get_current_state()
         # current_reward = sumo_agent.get_current_reward()
         # cumulative_reward = sumo_agent.get_cumulative_reward()
         if sumo_agent.all_travels_completed():
