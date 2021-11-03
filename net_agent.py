@@ -53,7 +53,7 @@ class NetAgent:
         self.memory = self.build_memory()
         self.batch_size = args.batch_size
         # self.device = args.device
-        self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.EPSILON, self.GAMMA = 0.05, 0.9
         self.q_target_outdated = 0
         self.UPDATE_Q_TAR = 5
@@ -84,10 +84,10 @@ class NetAgent:
         q_values = self.q_network(state, cur_phase)
         # print(q_values)
         if random.random() <= self.EPSILON:  # continue explore new Random Action
-            self.action = torch.tensor(random.randrange(len(q_values[0])))
+            self.action = torch.tensor(random.randrange(q_values.shape[0]))
             print("##Explore")
         else:  # exploitation
-            self.action = torch.argmax(q_values[0])
+            self.action = torch.argmax(q_values)
         if self.EPSILON > 0.001 and count >= 20000:
             self.EPSILON = self.EPSILON * 0.9999
         return self.action
@@ -150,8 +150,7 @@ class NetAgent:
         # next_state_values = torch.zeros(self.batch_size, device=self.device)
         next_phase_batch = torch.cat(batch.next_phase).to(self.device).view(self.batch_size, -1)
         next_state_batch = torch.cat(batch.next_state).to(self.device).view(self.batch_size, -1)
-        next_state_values = self.q_target(next_state_batch, next_phase_batch).max(1)[0].detach()
-
+        next_state_values = self.q_target(next_state_batch, next_phase_batch).max(1)[0].detach().unsqueeze(1)
         # next_state_values[non_final_mask] = self.q_target(non_final_next_states).max(1)[0].detach()
         # Compute the expected Q values
 
@@ -159,7 +158,7 @@ class NetAgent:
 
         # Compute Huber loss
         criterion = nn.SmoothL1Loss().to(self.device)
-        loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
+        loss = criterion(state_action_values, expected_state_action_values)
 
         # Optimize the model
         self.optimizer_DQN.zero_grad()

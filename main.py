@@ -109,9 +109,6 @@ def dqn_simulate(args, ckpt_path):
         step = 0
         net_agent.reset_update_count()
         with torch.no_grad():
-            sumo_agent.sumo_start()
-            step = 0
-            net_agent.reset_update_count()
 
             current_time = sumo_agent.get_current_time()
             while current_time < run_counts:
