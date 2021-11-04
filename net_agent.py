@@ -25,22 +25,32 @@ class ReplayMemory(object):
 
 
 class DQN(nn.Module):
-    def __init__(self, inputs, outputs):
+    def __init__(self, inputs, outputs, num_phases):
         super(DQN, self).__init__()
         self.shared_layer = nn.Linear(inputs, 20)
-        self.seperate0_layer = nn.Linear(20, 20)
-        self.seperate1_layer = nn.Linear(20, 20)
-        self.out_layer0 = nn.Linear(20, outputs)
-        self.out_layer1 = nn.Linear(20, outputs)
+        # self.seperate0_layer = nn.Linear(20, 20)
+        # self.seperate1_layer = nn.Linear(20, 20)
+        # self.out_layer0 = nn.Linear(20, outputs)
+        # self.out_layer1 = nn.Linear(20, outputs)
+        self.seperate_layers = nn.ModuleList([nn.Linear(20, 20) for i in range(num_phases)])
+        self.out_layers = nn.ModuleList([nn.Linear(20, outputs) for i in range(num_phases)])
 
     def forward(self, inputs, cur_phase):
         activate = nn.Sigmoid()
         x = activate(self.shared_layer(inputs))
-        x_0 = activate(self.seperate0_layer(x))
-        x_1 = activate(self.seperate1_layer(x))
-        q0_value, q1_value = self.out_layer0(x_0), self.out_layer1(x_1)
-        selector0, selector1 = torch.sum((1 - cur_phase)), torch.sum(cur_phase)
-        q_value = selector0 * q0_value + selector1 * q1_value
+        q_value = torch.zeros(len(cur_phase), 16)
+        # x_0 = activate(self.seperate0_layer(x))
+        # x_1 = activate(self.seperate1_layer(x))
+        # x = activate(self.seperate_layers[cur_phase](x))
+        for idx in range(len(cur_phase)):
+            x_mid = self.seperate_layers[cur_phase[idx]](x)
+            q_value += self.out_layers[cur_phase[idx]](x_mid)
+
+        # q_value = self.out_layers[cur_phase](x)
+
+        # q0_value, q1_value = self.out_layer0(x_0), self.out_layer1(x_1)
+        # selector0, selector1 = torch.sum((1 - cur_phase)), torch.sum(cur_phase)
+        # q_value = selector0 * q0_value + selector1 * q1_value
         return q_value.view(q_value.size(0), -1)
 
 
@@ -57,7 +67,7 @@ class NetAgent:
         self.EPSILON, self.GAMMA = 0.05, 0.9
         self.q_target_outdated = 0
         self.UPDATE_Q_TAR = 5
-        self.q_network, self.q_target = DQN(args.state_dim, args.num_actions).to(self.device), DQN(args.state_dim, args.num_actions).to(self.device)
+        self.q_network, self.q_target = DQN(args.state_dim, args.num_actions, args.num_phases).to(self.device), DQN(args.state_dim, args.num_actions, args.num_phases).to(self.device)
         self.lr = args.lr
 
     def load_model(self, file_name):
@@ -138,6 +148,7 @@ class NetAgent:
         action_batch = torch.cat(batch.action).to(self.device).view(self.batch_size, -1)
         reward_batch = torch.cat(batch.reward).to(self.device).view(self.batch_size, -1)
         cur_phase_batch = torch.cat(batch.cur_phase).to(self.device).view(self.batch_size, -1)
+
         # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
         # columns of actions taken. These are the actions which would've been taken
         # for each batch state according to policy_net
@@ -163,8 +174,8 @@ class NetAgent:
         # Optimize the model
         self.optimizer_DQN.zero_grad()
         loss.backward()
-        for param in self.q_network.parameters():
-            param.grad.data.clamp_(-1, 1)
+        # for param in self.q_network.parameters():
+        #     param.grad.data.clamp_(-1, 1)
         self.optimizer_DQN.step()
         return loss.item()
 

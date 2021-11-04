@@ -71,8 +71,9 @@ def dqn_simulate(args, ckpt_path):
 
             current_state = sumo_agent.get_current_state()
             current_phase = sumo_agent.get_current_phase()
+            cur_phase = torch.tensor([sumo_agent.get_dict_phase_to_int()[tuple(current_phase.tolist())]])
 
-            action = torch.tensor([net_agent.choose(current_time, current_state, current_phase, is_val)])
+            action = torch.tensor([net_agent.choose(current_time, current_state, cur_phase, is_val)])
 
             """#####################################################"""
             """####   2. Take your action                       ####"""
@@ -88,10 +89,11 @@ def dqn_simulate(args, ckpt_path):
 
             next_state = sumo_agent.get_current_state()
             next_phase = sumo_agent.get_next_phase()
+            nex_phase = torch.tensor([sumo_agent.get_dict_phase_to_int()[tuple(next_phase.tolist())]])
             current_reward = torch.FloatTensor([sumo_agent.get_current_reward()])
             # cumulative_reward = sumo_agent.get_cumulative_reward()
 
-            net_agent.remember(current_state, action, current_reward, next_state, current_phase, next_phase)
+            net_agent.remember(current_state, action, current_reward, next_state, cur_phase, nex_phase)
 
             loss = net_agent.trainer()
             logger.info('[INFO] Time {} Loss {} in epoch[{}/{}]'.format(current_time, loss, epoch, args.max_epoch))
@@ -117,8 +119,9 @@ def dqn_simulate(args, ckpt_path):
 
                 current_state = sumo_agent.get_current_state()
                 current_phase = sumo_agent.get_current_phase()
+                cur_phase = torch.tensor([sumo_agent.get_dict_phase_to_int()[tuple(current_phase.tolist())]])
 
-                action = torch.tensor([net_agent.choose(current_time, current_state, current_phase, is_val)])
+                action = torch.tensor([net_agent.choose(current_time, current_state, cur_phase, is_val)])
 
                 # get reward from sumo agent
                 sumo_agent.step(action)
@@ -141,7 +144,7 @@ if __name__ == "__main__":
     # 1. "./data/self_defined_1/osm": small-scale self-defined network
     # 2. "./data/nus1/osm": NUS network 1
     # 3. "./data/nus2/osm": NUS network 2
-    parser.add_argument('--require_gui', type=bool, default=True)
+    parser.add_argument('--require_gui', type=bool, default=False)
     parser.add_argument('--test_case_name', type=str, default="./data/self_defined_1/osm")
     parser.add_argument('--log_path', type=str, default="./log")
     parser.add_argument('--num_phases', type=int, default=16)

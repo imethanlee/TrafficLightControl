@@ -70,8 +70,8 @@ class SumoController:
             phase_list_copy = phase_list.copy()
             phase_list_copy.append(real_phase)
             if index == self.num_junctions - 1:
-                phase_tensor = torch.Tensor(phase_list_copy)
-                self._dict_phase_to_int[phase_tensor] = self._phase_int
+                phase_tensor = phase_list_copy
+                self._dict_phase_to_int[tuple(phase_tensor)] = self._phase_int
                 self._phase_int += 1
             else:
                 self._generate_phase_to_int_dict(index + 1, phase_list_copy)
