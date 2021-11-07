@@ -200,22 +200,22 @@ class SumoAgent:
     def metric_avg_reward(self):
         avg_reward = self._metric_reward / self._step
         avg_reward_over_time = torch.Tensor(self._list_metric_reward)
-        t = torch.Tensor([1 / i for i in range(self._step // self.delta_t)])
-        avg_reward_over_time = (t * avg_reward_over_time.T).T
+        # t = torch.Tensor([1 / i for i in range(self._step // self.delta_t)])
+        # avg_reward_over_time = (t * avg_reward_over_time.T).T
         return avg_reward, avg_reward_over_time
 
     def metric_avg_queue_length(self):
         avg_queue_length = self._metric_queue_length / self._step
         avg_queue_length_over_time = torch.Tensor(self._list_metric_queue_length)
-        t = torch.Tensor([1 / i for i in range(self._step // self.delta_t)])
-        avg_queue_length_over_time = (t * avg_queue_length_over_time.T).T
+        # t = torch.Tensor([1 / i for i in range(self._step // self.delta_t)])
+        # avg_queue_length_over_time = (t * avg_queue_length_over_time.T).T
         return avg_queue_length, avg_queue_length_over_time
 
     def metric_avg_delay(self):
         avg_delay = self._metric_delay / self._step
         avg_delay_over_time = torch.Tensor(self._list_metric_delay)
-        t = torch.Tensor([1 / i for i in range(self._step // self.delta_t)])
-        avg_delay_over_time = (t * avg_delay_over_time.T).T
+        # t = torch.Tensor([1 / i for i in range(self._step // self.delta_t)])
+        # avg_delay_over_time = (t * avg_delay_over_time.T).T
         return avg_delay, avg_delay_over_time
 
     def get_current_time(self):

@@ -55,6 +55,7 @@ def dqn_simulate(args, ckpt_path):
     net_agent = NetAgent(args, sumo_agent)
     run_counts = args.run_counts
     all_time = run_counts
+    avg_reward, avg_q_length, avg_delay = 0, float('inf'), float('inf')
     for epoch in range(args.max_epoch):
         is_val = False
 
@@ -129,9 +130,21 @@ def dqn_simulate(args, ckpt_path):
                 step += sumo_agent.delta_t
                 current_time = sumo_agent.get_current_time()
                 if sumo_agent.all_travels_completed():
-                    if sumo_agent.get_current_time() < all_time:
-                        all_time = sumo_agent.get_current_time()
-                        net_agent.save_model(join(ckpt_path, 'best_time.pth'))
+                    # if sumo_agent.get_current_time() < all_time:
+                    #     all_time = sumo_agent.get_current_time()
+                    #     net_agent.save_model(join(ckpt_path, 'best_reward.pth'))
+                    reward, _ = sumo_agent.metric_avg_reward()
+                    if reward > avg_reward:
+                        avg_reward = reward
+                        net_agent.save_model(join(ckpt_path, 'best_reward.pth'))
+                    q_length, _ = sumo_agent.metric_avg_queue_length()
+                    if q_length[0] < avg_q_length:
+                        avg_q_length = q_length[0]
+                        net_agent.save_model(join(ckpt_path, 'best_q_len.pth'))
+                    delay, _ = sumo_agent.metric_avg_delay()
+                    if delay[0] < avg_delay:
+                        avg_delay = delay[0]
+                        net_agent.save_model(join(ckpt_path, 'best_delay.pth'))
                     break
             sumo_agent.sumo_end()
             logger.info('[INFO] All_time {} in epoch[{}/{}]'.format(all_time, epoch, args.max_epoch))
