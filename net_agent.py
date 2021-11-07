@@ -25,20 +25,20 @@ class ReplayMemory(object):
 
 
 class DQN(nn.Module):
-    def __init__(self, inputs, outputs, num_phases):
+    def __init__(self, inputs, outputs, num_phases, hidden_dim):
         super(DQN, self).__init__()
-        self.shared_layer = nn.Linear(inputs, 20)
+        self.shared_layer = nn.Linear(inputs, hidden_dim)
         # self.seperate0_layer = nn.Linear(20, 20)
         # self.seperate1_layer = nn.Linear(20, 20)
         # self.out_layer0 = nn.Linear(20, outputs)
         # self.out_layer1 = nn.Linear(20, outputs)
-        self.seperate_layers = nn.ModuleList([nn.Linear(20, 20) for i in range(num_phases)])
-        self.out_layers = nn.ModuleList([nn.Linear(20, outputs) for i in range(num_phases)])
+        self.seperate_layers = nn.ModuleList([nn.Linear(hidden_dim, hidden_dim) for i in range(num_phases)])
+        self.out_layers = nn.ModuleList([nn.Linear(hidden_dim, outputs) for i in range(num_phases)])
 
-    def forward(self, inputs, cur_phase):
+    def forward(self, inputs, cur_phase, num_actions):
         activate = nn.Sigmoid()
         x = activate(self.shared_layer(inputs))
-        q_value = torch.zeros(len(cur_phase), 16)
+        q_value = torch.zeros(len(cur_phase), num_actions)
         # x_0 = activate(self.seperate0_layer(x))
         # x_1 = activate(self.seperate1_layer(x))
         # x = activate(self.seperate_layers[cur_phase](x))
@@ -55,19 +55,22 @@ class DQN(nn.Module):
 
 
 class NetAgent:
-    def __init__(self, args):
+    def __init__(self, args, sumo_agent):
         self.args = args
-        self.num_phases = args.num_phases
-        self.num_actions = args.num_actions
+        # self.num_phases = args.num_phases
+        # self.num_actions = args.num_actions
+        self.num_phases = sumo_agent.get_num_phases()
+        self.num_actions = sumo_agent.get_num_actions()
+        self.state_dim = sumo_agent.get_state_dim()
         self.memory_size = args.memory_size
         self.memory = self.build_memory()
         self.batch_size = args.batch_size
         # self.device = args.device
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
         self.EPSILON, self.GAMMA = 0.05, 0.9
         self.q_target_outdated = 0
         self.UPDATE_Q_TAR = 5
-        self.q_network, self.q_target = DQN(args.state_dim, args.num_actions, args.num_phases).to(self.device), DQN(args.state_dim, args.num_actions, args.num_phases).to(self.device)
+        self.q_network, self.q_target = DQN(self.state_dim, self.num_actions,self.num_phases, args.hidden_dim).to(self.device), DQN(self.state_dim, self.num_actions, self.num_phases, args.hidden_dim).to(self.device)
         self.lr = args.lr
 
     def load_model(self, file_name):
@@ -91,7 +94,7 @@ class NetAgent:
     def choose(self, count, state, cur_phase, is_val):
 
         ''' choose the best action for current state '''
-        q_values = self.q_network(state, cur_phase)
+        q_values = self.q_network(state, cur_phase, self.num_actions)
         # print(q_values)
         if random.random() <= self.EPSILON and not is_val:  # continue explore new Random Action
             self.action = torch.tensor(random.randrange(q_values.shape[0]))
@@ -152,7 +155,7 @@ class NetAgent:
         # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
         # columns of actions taken. These are the actions which would've been taken
         # for each batch state according to policy_net
-        state_action_values = self.q_network(state_batch, cur_phase_batch).gather(1, action_batch)
+        state_action_values = self.q_network(state_batch, cur_phase_batch, self.num_actions).gather(1, action_batch)
         # Compute V(s_{t+1}) for all next states.
         # Expected values of actions for non_final_next_states are computed based
         # on the "older" target_net; selecting their best reward with max(1)[0].
@@ -161,7 +164,7 @@ class NetAgent:
         # next_state_values = torch.zeros(self.batch_size, device=self.device)
         next_phase_batch = torch.cat(batch.next_phase).to(self.device).view(self.batch_size, -1)
         next_state_batch = torch.cat(batch.next_state).to(self.device).view(self.batch_size, -1)
-        next_state_values = self.q_target(next_state_batch, next_phase_batch).max(1)[0].detach().unsqueeze(1)
+        next_state_values = self.q_target(next_state_batch, next_phase_batch, self.num_actions).max(1)[0].detach().unsqueeze(1)
         # next_state_values[non_final_mask] = self.q_target(non_final_next_states).max(1)[0].detach()
         # Compute the expected Q values
 

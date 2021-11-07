@@ -52,7 +52,7 @@ def dqn_simulate(args, ckpt_path):
                            require_gui=args.require_gui,
                            gamma=args.gamma,
                            delta_t=args.delta_t)
-    net_agent = NetAgent(args)
+    net_agent = NetAgent(args, sumo_agent)
     run_counts = args.run_counts
     all_time = run_counts
     for epoch in range(args.max_epoch):
@@ -147,9 +147,9 @@ if __name__ == "__main__":
     parser.add_argument('--require_gui', type=bool, default=False)
     parser.add_argument('--test_case_name', type=str, default="./data/self_defined_1/osm")
     parser.add_argument('--log_path', type=str, default="./log")
-    parser.add_argument('--num_phases', type=int, default=16)
-    parser.add_argument('--num_actions', type=int, default=16)
-    parser.add_argument('--state_dim', type=int, default=20)
+    # parser.add_argument('--num_phases', type=int, default=16)
+    # parser.add_argument('--num_actions', type=int, default=16)
+    parser.add_argument('--hidden_dim', type=int, default=20)
     parser.add_argument('--memory_size', type=int, default=1000)
     parser.add_argument('--batch_size', type=int, default=32)
     # parser.add_argument('--device', type=int, default=0)
