@@ -80,13 +80,13 @@ class SumoController:
         return self._dict_phase_to_int
 
     def set_tls_to_next_phase_at_junction(self, junction_id):
-        current_phase = self.get_tls_current_phase_at_junction(junction_id)
+        current_phase = traci.trafficlight.getPhase(junction_id)
         next_phase = (current_phase + 1) % self.num_phases_in_junction[junction_id]
         traci.trafficlight.setPhase(junction_id, next_phase)
 
     def get_tls_current_phase_at_junction(self, junction_id):
         # Actually, no need to use mod(%) ...
-        return traci.trafficlight.getPhase(junction_id) % self.num_phases_in_junction[junction_id]
+        return traci.trafficlight.getPhase(junction_id)
 
     def get_tls_next_phase_at_junction(self, junction_id):
         return (traci.trafficlight.getPhase(junction_id) + 2) % self.num_phases_in_junction[junction_id]
@@ -227,7 +227,7 @@ class SumoController:
                 # duration = phase.attrib["duration"]
                 state = phase.attrib["state"]
                 phase.clear()
-                phase.set("duration", "10000")
+                phase.set("duration", "100000")
                 phase.set("state", state)
 
         self._pretty_xml(root)

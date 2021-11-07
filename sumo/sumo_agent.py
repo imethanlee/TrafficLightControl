@@ -25,6 +25,10 @@ class SumoAgent:
         self._yellow_cnt = -torch.ones([self.sumo_controller.num_junctions])
         self._step = 0
 
+        self._metric_reward, self._list_metric_reward = 0, []
+        self._metric_queue_length, self._list_metric_queue_length = torch.zeros([self.sumo_controller.num_junctions]), []
+        self._metric_delay, self._list_metric_delay = torch.zeros([self.sumo_controller.num_junctions]), []
+
     def sumo_start(self):
         traci.start(self.sumo_cmd)
 
@@ -42,6 +46,10 @@ class SumoAgent:
         self._yellow_cnt = -torch.ones([self.sumo_controller.num_junctions])
         self._step = 0
 
+        self._metric_reward, self._list_metric_reward = 0, []
+        self._metric_queue_length, self._list_metric_queue_length = torch.zeros([self.sumo_controller.num_junctions]), []
+        self._metric_delay, self._list_metric_delay = torch.zeros([self.sumo_controller.num_junctions]), []
+
         traci.close()
 
     def get_dict_phase_to_int(self):
@@ -55,7 +63,7 @@ class SumoAgent:
                 self.sumo_controller.set_tls_to_next_phase_at_junction(junction_id)
         self._yellow_cnt[self._yellow_cnt >= 0] += 1
 
-    def _take_action(self, action: int) -> None:
+    def _take_action(self, action: int):
         """
         :param action: A number ranging from 0 to 2^{num_junctions} - 1
         :return: None
@@ -148,9 +156,9 @@ class SumoAgent:
             c = 1
             current_reward[3] += c if self._current_action[i] != 0 else 0
 
-            # 5.? Total number of vehicles $N$ that passed the intersection during time interval $\Delta t$
+            # 5. Total number of vehicles $N$ that passed the intersection during time interval $\Delta t$
             # after the last action $a$
-            # 6.? Total travel time of vehicles T that passed the intersection during time interval $\Delta t$
+            # 6. Total travel time of vehicles T that passed the intersection during time interval $\Delta t$
             # after the last action $a$
             vehicle_number, travel_time = self.sumo_controller.get_passed_vehicle_number_and_travel_time_at_junction(
                 junction_id)
@@ -158,8 +166,15 @@ class SumoAgent:
             current_reward[5] += travel_time
 
         self._current_reward = torch.sum(weight * current_reward)
+
+        self._metric_reward += self._current_reward
+        self._list_metric_reward.append(self._metric_reward)
+        self._metric_queue_length += current_reward[0]
+        self._list_metric_queue_length.append(self._metric_queue_length.numpy())
+        self._metric_delay += current_reward[1]
+        self._list_metric_delay.append(self._metric_delay.numpy())
+
         self.current_action = None
-        return
 
     def get_current_reward(self):
         """
@@ -175,7 +190,7 @@ class SumoAgent:
         """
         self._cumulative_reward = self.gamma * self._cumulative_reward + self._current_reward
 
-    def get_cumulative_reward(self) -> torch.Tensor:
+    def get_cumulative_reward(self):
         """
         Get the reward for the whole episode
         :return: A torch.Tensor with only 1 element
@@ -183,16 +198,25 @@ class SumoAgent:
         return self._cumulative_reward
 
     def metric_avg_reward(self):
-        # TODO: to be implemented
-        return
+        avg_reward = self._metric_reward / self._step
+        avg_reward_over_time = torch.Tensor(self._list_metric_reward)
+        t = torch.Tensor([1 / i for i in range(self._step // self.delta_t)])
+        avg_reward_over_time = (t * avg_reward_over_time.T).T
+        return avg_reward, avg_reward_over_time
 
     def metric_avg_queue_length(self):
-        # TODO: to be implemented
-        return
+        avg_queue_length = self._metric_queue_length / self._step
+        avg_queue_length_over_time = torch.Tensor(self._list_metric_queue_length)
+        t = torch.Tensor([1 / i for i in range(self._step // self.delta_t)])
+        avg_queue_length_over_time = (t * avg_queue_length_over_time.T).T
+        return avg_queue_length, avg_queue_length_over_time
 
     def metric_avg_delay(self):
-        # TODO: to be implemented
-        return
+        avg_delay = self._metric_delay / self._step
+        avg_delay_over_time = torch.Tensor(self._list_metric_delay)
+        t = torch.Tensor([1 / i for i in range(self._step // self.delta_t)])
+        avg_delay_over_time = (t * avg_delay_over_time.T).T
+        return avg_delay, avg_delay_over_time
 
     def get_current_time(self):
         return self.sumo_controller.get_current_time()
@@ -200,11 +224,19 @@ class SumoAgent:
     def get_num_junctions(self):
         return self.sumo_controller.num_junctions
 
+    def get_num_actions(self):
+        return 2 ** self.sumo_controller.num_junctions
+
+    def get_num_phases(self):
+        return len(self.sumo_controller.get_dict_phase_to_int().keys())
+
+    def get_state_dim(self):
+        return self.sumo_controller.num_junctions * 5
+
     def all_travels_completed(self):
         return True if self.sumo_controller.get_vehicle_number_in_the_network() == 0 else False
 
     def step(self, action):
-
         # 1. Take action
         self._take_action(action)
 
@@ -213,7 +245,7 @@ class SumoAgent:
             self._yellow_control()
             traci.simulationStep()
             self.sumo_controller.update_vehicle_enter_time()
-            self._step += 1
+        self._step += self.delta_t
 
         # 3. Calculate state/reward
         self._calc_current_state()
