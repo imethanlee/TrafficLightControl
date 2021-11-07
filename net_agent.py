@@ -43,7 +43,7 @@ class DQN(nn.Module):
         # x_1 = activate(self.seperate1_layer(x))
         # x = activate(self.seperate_layers[cur_phase](x))
         for idx in range(len(cur_phase)):
-            x_mid = self.seperate_layers[cur_phase[idx]](x)
+            x_mid = activate(self.seperate_layers[cur_phase[idx]](x))
             q_value += self.out_layers[cur_phase[idx]](x_mid)
 
         # q_value = self.out_layers[cur_phase](x)
