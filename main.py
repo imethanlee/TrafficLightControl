@@ -94,8 +94,8 @@ def dqn_simulate(args, ckpt_path):
             net_agent.remember(current_state, action, current_reward, next_state, cur_phase, nex_phase)
 
             loss = net_agent.trainer()
-            logger.info('[INFO] Time {} Loss {} in epoch[{}/{}]'.format(current_time, loss, epoch, args.max_epoch))
-            print(current_reward)
+            logger.info('[INFO] Reward {} Loss {} in epoch[{}/{}]'.format(current_reward, loss, epoch, args.max_epoch))
+            # print(current_reward)
             """#####################################################"""
             """########                END              ###########"""
             """#####################################################"""
@@ -143,9 +143,10 @@ def dqn_simulate(args, ckpt_path):
                     if delay[0] < avg_delay:
                         avg_delay = delay[0]
                         net_agent.save_model(join(ckpt_path, 'best_delay.pth'))
+                    logger.info('[INFO] best model saved')
+                    logger.info('[INFO] reward {}, q_length {}, delay {} in epoch[{}/{}]'.format(reward, q_length, delay, epoch, args.max_epoch))
                     break
             sumo_agent.sumo_end()
-            logger.info('[INFO] reward {}, q_length {}, delay {} in epoch[{}/{}]'.format(reward, q_length, delay, epoch, args.max_epoch))
     dqn_test(sumo_agent, run_counts, net_agent, ckpt_path)
     # End interacting with the SUMO environment
 
@@ -196,8 +197,8 @@ if __name__ == "__main__":
     # parser.add_argument('--num_actions', type=int, default=16)
     parser.add_argument('--hidden_dim', type=int, default=20)
     parser.add_argument('--memory_size', type=int, default=1000)
-    parser.add_argument('--batch_size', type=int, default=32)
-    # parser.add_argument('--device', type=int, default=0)
+    parser.add_argument('--batch_size', type=int, default=300)
+    parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--max_epoch', default=50, type=int)
 

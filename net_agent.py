@@ -28,6 +28,7 @@ class DQN(nn.Module):
     def __init__(self, inputs, outputs, num_phases, hidden_dim):
         super(DQN, self).__init__()
         self.shared_layer = nn.Linear(inputs, hidden_dim)
+        self.device = 'cuda:0'
         # self.seperate0_layer = nn.Linear(20, 20)
         # self.seperate1_layer = nn.Linear(20, 20)
         # self.out_layer0 = nn.Linear(20, outputs)
@@ -38,7 +39,7 @@ class DQN(nn.Module):
     def forward(self, inputs, cur_phase, num_actions):
         activate = nn.Sigmoid()
         x = activate(self.shared_layer(inputs))
-        q_value = torch.zeros(len(cur_phase), num_actions)
+        q_value = torch.zeros(len(cur_phase), num_actions).to(self.device)
         # x_0 = activate(self.seperate0_layer(x))
         # x_1 = activate(self.seperate1_layer(x))
         # x = activate(self.seperate_layers[cur_phase](x))
@@ -65,8 +66,8 @@ class NetAgent:
         self.memory_size = args.memory_size
         self.memory = self.build_memory()
         self.batch_size = args.batch_size
-        # self.device = args.device
-        self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+        self.device = args.device
+        # self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.EPSILON, self.GAMMA = 0.05, 0.9
         self.q_target_outdated = 0
         self.UPDATE_Q_TAR = 5
@@ -92,6 +93,9 @@ class NetAgent:
     def choose(self, count, state, cur_phase, is_val):
 
         ''' choose the best action for current state '''
+        state = state.to(self.device)
+        cur_phase = torch.tensor(cur_phase).to(self.device)
+        self.num_actions = torch.tensor(self.num_actions).to(self.device)
         q_values = self.q_network(state, cur_phase, self.num_actions)
         # print(q_values)
         if random.random() <= self.EPSILON and not is_val:  # continue explore new Random Action
