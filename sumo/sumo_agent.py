@@ -4,11 +4,11 @@ from sumo.sumo_controller import *
 
 
 class SumoAgent:
-    def __init__(self, name: str, require_gui: bool, gamma=0.8, delta_t=5):
-        self._name = name
-        self._require_gui = require_gui
-        self.gamma = gamma
-        self.delta_t = delta_t
+    def __init__(self, args):
+        self._name = args.test_case_name
+        self._require_gui = args.require_gui
+        self.gamma = args.gamma
+        self.delta_t = args.delta_t
         self._yellow_duration = 3
         if self._yellow_duration > self.delta_t:
             raise ValueError("Duration of Yellow Light MUST < delta_t")

@@ -2,17 +2,14 @@ from sumo.sumo_agent import *
 
 
 def fixed_policy_simulate(args):
-    sumo_agent = SumoAgent(args.test_case_name,
-                           require_gui=args.require_gui,
-                           gamma=args.gamma,
-                           delta_t=args.delta_t)
+    sumo_agent = SumoAgent(args)
     sumo_agent.sumo_start()
     step = 0
     while True:
         # TODO: Define some fixed policy
         # current_state = sumo_agent.get_current_state()
 
-        if step % 10 == 0:
+        if step % 5 == 0:
             action = 2 ** sumo_agent.get_num_junctions() - 1
         else:
             action = 0
@@ -24,5 +21,10 @@ def fixed_policy_simulate(args):
         if sumo_agent.all_travels_completed():
             break
         step += sumo_agent.delta_t
-
+    reward, _ = sumo_agent.metric_avg_reward()
+    print("reward", reward)
+    q_length, _ = sumo_agent.metric_avg_queue_length()
+    print("queue length", q_length)
+    delay, _ = sumo_agent.metric_avg_delay()
+    print("delay", delay)
     sumo_agent.sumo_end()

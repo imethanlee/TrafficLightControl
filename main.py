@@ -48,10 +48,7 @@ def create_dir_with_st(path):
 # TODO: 参考下面这个method来 1.获取state 2.执行action 3.获取reward
 def dqn_simulate(args, ckpt_path):
     # Specify the traffic environment
-    sumo_agent = SumoAgent(args.test_case_name,
-                           require_gui=args.require_gui,
-                           gamma=args.gamma,
-                           delta_t=args.delta_t)
+    sumo_agent = SumoAgent(args)
     net_agent = NetAgent(args, sumo_agent)
     run_counts = args.run_counts
     all_time = run_counts
@@ -158,7 +155,7 @@ if __name__ == "__main__":
     # 2. "./data/nus1/osm": NUS network 1
     # 3. "./data/nus2/osm": NUS network 2
     parser.add_argument('--require_gui', type=bool, default=False)
-    parser.add_argument('--test_case_name', type=str, default="./data/self_defined_1/osm")
+    parser.add_argument('--test_case_name', type=str, default="./data/one_run/osm")
     parser.add_argument('--log_path', type=str, default="./log")
     # parser.add_argument('--num_phases', type=int, default=16)
     # parser.add_argument('--num_actions', type=int, default=16)
