@@ -8,14 +8,14 @@
     <flow id="c41" type="Car" begin="0" end="3600" number="75" from="edge4-0" to="edge0-1" departLane="best" departSpeed="5.0"/>
     <flow id="c42" type="Car" begin="0" end="3600" number="75" from="edge4-0" to="edge0-2" departLane="best" departSpeed="5.0"/>
 
-    <flow id="01" type="Car" begin="0" end="900" number="200" from="edge1-0" to="edge0-2" departLane="best" departSpeed="5.0"/>
-    <flow id="02" type="Car" begin="0" end="900" number="200" from="edge2-0" to="edge0-1" departLane="best" departSpeed="5.0"/>
-    <flow id="03" type="Car" begin="900" end="1800" number="200" from="edge3-0" to="edge0-4" departLane="best" departSpeed="5.0"/>
-    <flow id="04" type="Car" begin="900" end="1800" number="200" from="edge4-0" to="edge0-3" departLane="best" departSpeed="5.0"/>
+    <flow id="01" type="Car" begin="0" end="900" number="300" from="edge1-0" to="edge0-2" departLane="best" departSpeed="5.0"/>
+    <flow id="02" type="Car" begin="0" end="900" number="300" from="edge2-0" to="edge0-1" departLane="best" departSpeed="5.0"/>
+    <flow id="03" type="Car" begin="900" end="1800" number="300" from="edge3-0" to="edge0-4" departLane="best" departSpeed="5.0"/>
+    <flow id="04" type="Car" begin="900" end="1800" number="300" from="edge4-0" to="edge0-3" departLane="best" departSpeed="5.0"/>
 
-    <flow id="05" type="Car" begin="1800" end="2700" number="200" from="edge1-0" to="edge0-2" departLane="best" departSpeed="5.0"/>
-    <flow id="06" type="Car" begin="1800" end="2700" number="200" from="edge2-0" to="edge0-1" departLane="best" departSpeed="5.0"/>
-    <flow id="07" type="Car" begin="2700" end="3600" number="200" from="edge3-0" to="edge0-4" departLane="best" departSpeed="5.0"/>
-    <flow id="08" type="Car" begin="2700" end="3600" number="200" from="edge4-0" to="edge0-3" departLane="best" departSpeed="5.0"/>
+    <flow id="05" type="Car" begin="1800" end="2700" number="300" from="edge1-0" to="edge0-2" departLane="best" departSpeed="5.0"/>
+    <flow id="06" type="Car" begin="1800" end="2700" number="300" from="edge2-0" to="edge0-1" departLane="best" departSpeed="5.0"/>
+    <flow id="07" type="Car" begin="2700" end="3600" number="300" from="edge3-0" to="edge0-4" departLane="best" departSpeed="5.0"/>
+    <flow id="08" type="Car" begin="2700" end="3600" number="300" from="edge4-0" to="edge0-3" departLane="best" departSpeed="5.0"/>
 
 </routes>

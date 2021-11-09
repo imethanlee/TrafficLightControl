@@ -9,7 +9,7 @@ def fixed_policy_simulate(args):
         # TODO: Define some fixed policy
         # current_state = sumo_agent.get_current_state()
 
-        if step % 5 == 0:
+        if step % 20 == 0:
             action = 2 ** sumo_agent.get_num_junctions() - 1
         else:
             action = 0

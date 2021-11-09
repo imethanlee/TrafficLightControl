@@ -52,7 +52,7 @@ def dqn_simulate(args, ckpt_path):
     net_agent = NetAgent(args, sumo_agent)
     run_counts = args.run_counts
     all_time = run_counts
-    avg_reward, avg_q_length, avg_delay = 0, float('inf'), float('inf')
+    avg_reward, avg_q_length, avg_delay = -float('inf'), float('inf'), float('inf')
     for epoch in range(args.max_epoch):
         is_val = False
 
@@ -95,6 +95,7 @@ def dqn_simulate(args, ckpt_path):
 
             loss = net_agent.trainer()
             logger.info('[INFO] Time {} Loss {} in epoch[{}/{}]'.format(current_time, loss, epoch, args.max_epoch))
+            print(current_reward)
             """#####################################################"""
             """########                END              ###########"""
             """#####################################################"""
@@ -151,6 +152,7 @@ def dqn_simulate(args, ckpt_path):
 
 def dqn_test(sumo_agent, run_counts, net_agent, ckpt_path):
     step = 0
+    sumo_agent.sumo_start()
     net_agent.load_model(join(ckpt_path, 'best_reward.pth'))
     with torch.no_grad():
         is_val = True
@@ -221,3 +223,8 @@ if __name__ == "__main__":
     dqn_simulate(args, ckpt_path)
     # fixed_policy_simulate(args)
     # np.random.seed(opt.seed)
+
+    # s_agent = SumoAgent(args)
+    # n_agent = NetAgent(args, s_agent)
+    # dqn_test(s_agent, args.run_counts, n_agent, 'best_model/self_defined_1/')
+
