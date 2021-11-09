@@ -76,14 +76,10 @@ class NetAgent:
     def load_model(self, root_path):
         checkpoint = torch.load(root_path)
         self.q_network.load_state_dict(checkpoint['q_state_dict'])
-        self.q_target.load_state_dict(checkpoint['q_target_state_dict'])
-        self.optimizer_DQN.load_state_dict(checkpoint['optim'])
         # self.q_network.eval()
 
     def save_model(self, root_path):
         saving_dict = {'q_state_dict': self.q_network.state_dict(),
-                       'q_target_state_dict': self.q_target.state_dict(),
-                       'optim': self.optimizer_DQN.state_dict(),
                        'is_best': 1}
         torch.save(saving_dict, root_path)
 
