@@ -147,8 +147,41 @@ def dqn_simulate(args, ckpt_path):
                         net_agent.save_model(join(ckpt_path, 'best_delay.pth'))
                     break
             sumo_agent.sumo_end()
-            logger.info('[INFO] All_time {} in epoch[{}/{}]'.format(all_time, epoch, args.max_epoch))
+            logger.info('[INFO] reward {}, q_length {}, delay {} in epoch[{}/{}]'.format(reward, q_length, delay, epoch, args.max_epoch))
+    dqn_test(sumo_agent, run_counts, net_agent, ckpt_path)
     # End interacting with the SUMO environment
+
+
+def dqn_test(sumo_agent, run_counts, net_agent, ckpt_path):
+    step = 0
+    net_agent.load_model(join(ckpt_path, 'best_reward.pth'))
+    with torch.no_grad():
+        is_val = True
+
+        current_time = sumo_agent.get_current_time()
+        while current_time < run_counts:
+
+            current_state = sumo_agent.get_current_state()
+            current_phase = sumo_agent.get_current_phase()
+            cur_phase = torch.tensor([sumo_agent.get_dict_phase_to_int()[tuple(current_phase.tolist())]])
+
+            action = torch.tensor([net_agent.choose(current_time, current_state, cur_phase, is_val)])
+
+            # get reward from sumo agent
+            sumo_agent.step(action)
+
+            step += sumo_agent.delta_t
+            current_time = sumo_agent.get_current_time()
+            if sumo_agent.all_travels_completed():
+                # if sumo_agent.get_current_time() < all_time:
+                #     all_time = sumo_agent.get_current_time()
+                #     net_agent.save_model(join(ckpt_path, 'best_reward.pth'))
+                reward, _ = sumo_agent.metric_avg_reward()
+                q_length, _ = sumo_agent.metric_avg_queue_length()
+                delay, _ = sumo_agent.metric_avg_delay()
+                logger.info('[INFO] Test_reward {}, Test_q_length {}, Test_delay {}'.format(reward, q_length, delay))
+                break
+        sumo_agent.sumo_end()
 
 
 if __name__ == "__main__":

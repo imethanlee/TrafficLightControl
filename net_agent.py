@@ -73,14 +73,16 @@ class NetAgent:
         self.q_network, self.q_target = DQN(self.state_dim, self.num_actions,self.num_phases, args.hidden_dim).to(self.device), DQN(self.state_dim, self.num_actions, self.num_phases, args.hidden_dim).to(self.device)
         self.lr = args.lr
 
-    def load_model(self, file_name):
-        checkpoint = torch.load((os.path.join(self.args.model_path, "{}_model.pth".format(file_name))))
+    def load_model(self, root_path):
+        checkpoint = torch.load(root_path)
         self.q_network.load_state_dict(checkpoint['q_state_dict'])
+        self.q_target.load_state_dict(checkpoint['q_target_state_dict'])
         self.optimizer_DQN.load_state_dict(checkpoint['optim'])
         # self.q_network.eval()
 
     def save_model(self, root_path):
         saving_dict = {'q_state_dict': self.q_network.state_dict(),
+                       'q_target_state_dict': self.q_target.state_dict(),
                        'optim': self.optimizer_DQN.state_dict(),
                        'is_best': 1}
         torch.save(saving_dict, root_path)
@@ -198,6 +200,7 @@ class NetAgent:
             loss = self.train_net(transitions)
             self.q_target_outdated += 1
             self.forget()
+            self.update_network_bar()
             return loss
 
     def update_network_bar(self):
