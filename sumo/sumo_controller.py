@@ -22,6 +22,7 @@ class SumoController:
         self._init_num_phases_in_junction()
 
         self.vehicle_enter_time = {}  # {vehicle_id -> its entering time}
+        self.vehicle_travel_duration = {}  # {vehicle_id -> its travel duration}
 
         self._dict_phase_to_int = {}
         self._phase_int = 0
@@ -155,6 +156,9 @@ class SumoController:
         for vehicle_id in vehicles_id:
             if vehicle_id not in self.vehicle_enter_time.keys():
                 self.vehicle_enter_time[vehicle_id] = self.get_current_time()
+        for vehicle_id in self.vehicle_enter_time.keys():
+            if vehicle_id not in vehicles_id and vehicle_id not in self.vehicle_travel_duration.keys():
+                self.vehicle_travel_duration[vehicle_id] = self.get_current_time() - self.vehicle_enter_time[vehicle_id]
 
     def get_vehicle_number_in_the_network(self):
         return len(traci.vehicle.getIDList())

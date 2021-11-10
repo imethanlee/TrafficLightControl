@@ -26,8 +26,8 @@ class SumoAgent:
         self._step = 0
 
         self._metric_reward, self._list_metric_reward = 0, []
-        self._metric_queue_length, self._list_metric_queue_length = torch.zeros([self.sumo_controller.num_junctions]), []
-        self._metric_delay, self._list_metric_delay = torch.zeros([self.sumo_controller.num_junctions]), []
+        self._metric_queue_length, self._list_metric_queue_length = torch.zeros([1]), []
+        self._metric_delay, self._list_metric_delay = torch.zeros([1]), []
 
     def sumo_start(self):
         traci.start(self.sumo_cmd)
@@ -47,8 +47,8 @@ class SumoAgent:
         self._step = 0
 
         self._metric_reward, self._list_metric_reward = 0, []
-        self._metric_queue_length, self._list_metric_queue_length = torch.zeros([self.sumo_controller.num_junctions]), []
-        self._metric_delay, self._list_metric_delay = torch.zeros([self.sumo_controller.num_junctions]), []
+        self._metric_queue_length, self._list_metric_queue_length = torch.zeros([1]), []
+        self._metric_delay, self._list_metric_delay = torch.zeros([1]), []
 
         traci.close()
 
@@ -217,6 +217,11 @@ class SumoAgent:
         # t = torch.Tensor([1 / i for i in range(self._step // self.delta_t)])
         # avg_delay_over_time = (t * avg_delay_over_time.T).T
         return avg_delay, avg_delay_over_time
+
+    def metric_avg_duration(self):
+        total_duration = sum(self.sumo_controller.vehicle_travel_duration.values())
+        total_vehicle = len(self.sumo_controller.vehicle_travel_duration.keys())
+        return total_duration / total_vehicle
 
     def get_current_time(self):
         return self.sumo_controller.get_current_time()
