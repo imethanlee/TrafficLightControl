@@ -190,7 +190,7 @@ if __name__ == "__main__":
     # 1. "./data/self_defined_1/osm": small-scale self-defined network
     # 2. "./data/nus1/osm": NUS network 1
     # 3. "./data/nus2/osm": NUS network 2
-    parser.add_argument('--require_gui', type=bool, default=False)
+    parser.add_argument('--require_gui', type=bool, default=True)
     parser.add_argument('--test_case_name', type=str, default="./data/one_run/osm")
     parser.add_argument('--log_path', type=str, default="./log")
     # parser.add_argument('--num_phases', type=int, default=16)
