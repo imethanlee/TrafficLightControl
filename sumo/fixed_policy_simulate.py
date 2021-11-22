@@ -22,9 +22,12 @@ def fixed_policy_simulate(args):
             break
         step += sumo_agent.delta_t
     reward, _ = sumo_agent.metric_avg_reward()
-    print("reward", reward)
+    print("reward: ", reward)
     q_length, _ = sumo_agent.metric_avg_queue_length()
-    print("queue length", q_length)
+    print("queue length: ", q_length)
     delay, _ = sumo_agent.metric_avg_delay()
-    print("delay", delay)
+    print("delay: ", delay)
+    duration = sumo_agent.metric_avg_duration()
+    print("duration: ", duration)
+    print("step: ", step)
     sumo_agent.sumo_end()

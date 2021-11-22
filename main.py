@@ -179,7 +179,8 @@ def dqn_test(sumo_agent, run_counts, net_agent, ckpt_path):
                 reward, _ = sumo_agent.metric_avg_reward()
                 q_length, _ = sumo_agent.metric_avg_queue_length()
                 delay, _ = sumo_agent.metric_avg_delay()
-                logger.info('[INFO] Test_reward {}, Test_q_length {}, Test_delay {}'.format(reward, q_length, delay))
+                duration = sumo_agent.metric_avg_duration()
+                logger.info('[INFO] Test_reward {}, Test_q_length {}, Test_delay {}, Test Duration {}'.format(reward, q_length, delay, duration))
                 break
         sumo_agent.sumo_end()
 
@@ -227,5 +228,5 @@ if __name__ == "__main__":
 
     # s_agent = SumoAgent(args)
     # n_agent = NetAgent(args, s_agent)
-    # dqn_test(s_agent, args.run_counts, n_agent, 'best_model/self_defined_1/')
+    # dqn_test(s_agent, args.run_counts, n_agent, 'best_model/one_run/')
 
